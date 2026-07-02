@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>SMC Monthly Reports</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<style>
+  :root { --ink:#1a2332; --muted:#5b6b7f; --accent:#0f5c94; --bg:#f4f6f9; --card:#ffffff; --line:#dde4ec; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Georgia, 'Times New Roman', serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--ink); color:#fff; padding:20px 24px; }
+  header h1 { margin:0; font-size:1.25rem; font-weight:600; letter-spacing:.02em; }
+  header p { margin:4px 0 0; color:#aebccd; font-size:.85rem; font-family: system-ui, sans-serif; }
+  .wrap { max-width: 860px; margin: 24px auto 64px; padding: 0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:24px; }
+  #gate { max-width:420px; margin:10vh auto; text-align:center; }
+  #gate input[type=password] { width:100%; padding:10px 12px; font-size:1rem; border:1px solid var(--line); border-radius:6px; margin:12px 0; }
+  #gate button, .toolbar button, .toolbar select { padding:9px 16px; font-size:.95rem; border:0; border-radius:6px; background:var(--accent); color:#fff; cursor:pointer; font-family: system-ui, sans-serif; }
+  #gate .err { color:#a33; font-size:.85rem; min-height:1.2em; font-family: system-ui, sans-serif; }
+  .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  .toolbar select { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .toolbar .spacer { flex:1; }
+  .toolbar .lock { background:#889; }
+  #report { line-height:1.55; }
+  #report h1 { font-size:1.5rem; border-bottom:2px solid var(--ink); padding-bottom:8px; }
+  #report h2 { font-size:1.15rem; margin-top:1.8em; color:var(--accent); }
+  #report table { border-collapse: collapse; width:100%; margin:12px 0; font-size:.92rem; font-family: system-ui, sans-serif; }
+  #report th, #report td { border:1px solid var(--line); padding:6px 10px; text-align:left; }
+  #report th { background:#eef2f7; }
+  #report tr:nth-child(even) td { background:#fafbfd; }
+  #report hr { border:0; border-top:1px solid var(--line); margin:24px 0; }
+  #report blockquote { border-left:3px solid var(--accent); margin:0; padding:2px 14px; color:var(--muted); }
+  .hidden { display:none; }
+  footer { text-align:center; color:var(--muted); font-size:.78rem; margin-top:32px; font-family: system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Standard Management Company</h1>
+  <p>Monthly cash &amp; operations reports — internal</p>
+</header>
+
+<div class="wrap">
+  <div id="gate" class="card">
+    <h2 style="margin-top:0">Enter password</h2>
+    <input type="password" id="pw" placeholder="Password" autofocus>
+    <div class="err" id="err"></div>
+    <button id="unlock">Unlock</button>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="toolbar">
+      <label for="picker" style="font-family:system-ui,sans-serif;font-size:.9rem;color:var(--muted)">Report:</label>
+      <select id="picker"></select>
+      <div class="spacer"></div>
+      <button class="lock" id="lock">Lock</button>
+    </div>
+    <div class="card"><div id="report">Loading…</div></div>
+    <footer>Content is AES-256-GCM encrypted at rest. Decryption happens in your browser only.</footer>
+  </div>
+</div>
+
+<script>
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+let manifest = null, password = null;
+
+async function deriveKey(pw, salt, iterations) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+}
+
+async function decryptReport(file, pw) {
+  const enc = await (await fetch(file, {cache: 'no-store'})).json();
+  const key = await deriveKey(pw, b64(enc.salt), enc.iterations);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(enc.nonce) }, key, b64(enc.ciphertext));
+  return new TextDecoder().decode(pt);
+}
+
+async function showReport(id) {
+  const r = manifest.reports.find(x => x.id === id);
+  document.getElementById('report').textContent = 'Decrypting…';
+  try {
+    const md = await decryptReport(r.file, password);
+    document.getElementById('report').innerHTML = marked.parse(md);
+  } catch (e) {
+    document.getElementById('report').textContent = 'Decryption failed for this report.';
+  }
+}
+
+async function unlock() {
+  const pw = document.getElementById('pw').value;
+  const err = document.getElementById('err');
+  err.textContent = '';
+  if (!pw) return;
+  if (!manifest) manifest = await (await fetch('manifest.json', {cache: 'no-store'})).json();
+  if (!manifest.reports.length) { err.textContent = 'No reports published yet.'; return; }
+  document.getElementById('unlock').textContent = 'Checking…';
+  try {
+    await decryptReport(manifest.reports[0].file, pw);   // verify against newest report
+  } catch (e) {
+    err.textContent = 'Wrong password.';
+    document.getElementById('unlock').textContent = 'Unlock';
+    return;
+  }
+  password = pw;
+  sessionStorage.setItem('smc_pw', pw);
+  const picker = document.getElementById('picker');
+  picker.innerHTML = manifest.reports.map(r => `<option value="${r.id}">${r.title}</option>`).join('');
+  picker.onchange = () => showReport(picker.value);
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  showReport(manifest.reports[0].id);
+}
+
+document.getElementById('unlock').onclick = unlock;
+document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+document.getElementById('lock').onclick = () => { sessionStorage.removeItem('smc_pw'); location.reload(); };
+
+// auto-unlock within the same browser session
+const saved = sessionStorage.getItem('smc_pw');
+if (saved) { document.getElementById('pw').value = saved; unlock(); }
+</script>
+</body>
+</html>

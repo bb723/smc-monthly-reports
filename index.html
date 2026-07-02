@@ -4,61 +4,123 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>SMC Monthly Reports</title>
+<title>Monthly Reports | Standard Management Company</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <style>
-  :root { --ink:#1a2332; --muted:#5b6b7f; --accent:#0f5c94; --bg:#f4f6f9; --card:#ffffff; --line:#dde4ec; }
+  :root {
+    --green:#1f4f3a; --green-2:#149671; --green-tint:#eef5f1; --green-line:#cfe3d9;
+    --amber:#f59e0b; --ink:#111827; --muted:#6b7280; --slate:#374151;
+    --bg:#f7f8f5; --card:#ffffff; --line:#e5e7eb;
+    --head: 'Montserrat', system-ui, sans-serif;
+    --body: 'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif;
+  }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: Georgia, 'Times New Roman', serif; background:var(--bg); color:var(--ink); }
-  header { background:var(--ink); color:#fff; padding:20px 24px; }
-  header h1 { margin:0; font-size:1.25rem; font-weight:600; letter-spacing:.02em; }
-  header p { margin:4px 0 0; color:#aebccd; font-size:.85rem; font-family: system-ui, sans-serif; }
-  .wrap { max-width: 860px; margin: 24px auto 64px; padding: 0 16px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:24px; }
-  #gate { max-width:420px; margin:10vh auto; text-align:center; }
-  #gate input[type=password] { width:100%; padding:10px 12px; font-size:1rem; border:1px solid var(--line); border-radius:6px; margin:12px 0; }
-  #gate button, .toolbar button, .toolbar select { padding:9px 16px; font-size:.95rem; border:0; border-radius:6px; background:var(--accent); color:#fff; cursor:pointer; font-family: system-ui, sans-serif; }
-  #gate .err { color:#a33; font-size:.85rem; min-height:1.2em; font-family: system-ui, sans-serif; }
-  .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
-  .toolbar select { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  body { margin:0; font-family:var(--body); background:var(--bg); color:var(--ink); font-size:16.5px; }
+
+  header { background:var(--green); padding:26px 24px 22px; border-bottom:4px solid var(--amber); }
+  .brand { max-width:900px; margin:0 auto; display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; }
+  .brand h1 { margin:0; font-family:var(--head); font-weight:700; font-size:1.28rem;
+              letter-spacing:.14em; color:#fff; text-transform:uppercase; }
+  .brand span { font-family:var(--head); font-weight:500; font-size:.78rem; letter-spacing:.18em;
+                text-transform:uppercase; color:#bcd9cb; }
+
+  .wrap { max-width:900px; margin:28px auto 72px; padding:0 18px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          box-shadow:0 1px 3px rgba(17,24,39,.06); }
+
+  /* ---- password gate ---- */
+  #gate { max-width:440px; margin:9vh auto; text-align:center; padding:40px 36px; }
+  #gate .lockmark { width:52px; height:52px; margin:0 auto 14px; border-radius:50%;
+    background:var(--green-tint); border:1.5px solid var(--green-line);
+    display:flex; align-items:center; justify-content:center; }
+  #gate .lockmark svg { width:22px; height:22px; stroke:var(--green); }
+  #gate h2 { margin:0 0 4px; font-family:var(--head); font-weight:600; font-size:1.05rem;
+             letter-spacing:.05em; text-transform:uppercase; color:var(--green); }
+  #gate p  { margin:0 0 18px; color:var(--muted); font-size:.92rem; }
+  #gate input[type=password] { width:100%; padding:12px 14px; font-size:1rem; font-family:var(--body);
+    border:1.5px solid var(--line); border-radius:8px; margin-bottom:10px; outline:none; }
+  #gate input[type=password]:focus { border-color:var(--green-2); }
+  #gate .err { color:#b3402a; font-size:.85rem; min-height:1.3em; margin-bottom:6px; }
+  button.primary { width:100%; padding:12px 18px; font-size:.9rem; font-family:var(--head);
+    font-weight:600; letter-spacing:.08em; text-transform:uppercase; border:0; border-radius:8px;
+    background:var(--green); color:#fff; cursor:pointer; transition:background .15s; }
+  button.primary:hover { background:var(--green-2); }
+
+  /* ---- report view ---- */
+  .toolbar { display:flex; gap:12px; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
+  .toolbar label { font-family:var(--head); font-size:.72rem; font-weight:600; letter-spacing:.12em;
+                   text-transform:uppercase; color:var(--muted); }
+  .toolbar select { padding:9px 14px; font-size:.95rem; font-family:var(--body); color:var(--ink);
+    background:#fff; border:1.5px solid var(--line); border-radius:8px; }
   .toolbar .spacer { flex:1; }
-  .toolbar .lock { background:#889; }
-  #report { line-height:1.55; }
-  #report h1 { font-size:1.5rem; border-bottom:2px solid var(--ink); padding-bottom:8px; }
-  #report h2 { font-size:1.15rem; margin-top:1.8em; color:var(--accent); }
-  #report table { border-collapse: collapse; width:100%; margin:12px 0; font-size:.92rem; font-family: system-ui, sans-serif; }
-  #report th, #report td { border:1px solid var(--line); padding:6px 10px; text-align:left; }
-  #report th { background:#eef2f7; }
-  #report tr:nth-child(even) td { background:#fafbfd; }
-  #report hr { border:0; border-top:1px solid var(--line); margin:24px 0; }
-  #report blockquote { border-left:3px solid var(--accent); margin:0; padding:2px 14px; color:var(--muted); }
+  .toolbar .lock { padding:9px 18px; font-size:.78rem; font-family:var(--head); font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase; border:1.5px solid var(--line); border-radius:8px;
+    background:#fff; color:var(--slate); cursor:pointer; }
+  .toolbar .lock:hover { border-color:var(--green-2); color:var(--green); }
+
+  #reportcard { padding:38px 44px; }
+  @media (max-width:640px){ #reportcard { padding:26px 20px; } }
+  #report { line-height:1.62; }
+  #report > h1 { font-family:var(--head); font-weight:700; font-size:1.42rem; line-height:1.3;
+    color:var(--green); border-bottom:3px solid var(--green); padding-bottom:12px; margin-top:0; }
+  #report h2 { font-family:var(--head); font-weight:600; font-size:1.02rem; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--green); margin-top:2.1em;
+    padding-left:12px; border-left:4px solid var(--amber); }
+  #report h3 { font-family:var(--head); font-weight:600; font-size:.95rem; color:var(--slate); }
+  #report a { color:var(--green-2); }
+  #report strong { color:var(--ink); }
+  #report table { border-collapse:collapse; width:100%; margin:14px 0; font-size:.93rem; }
+  #report th { font-family:var(--head); font-size:.74rem; font-weight:600; letter-spacing:.06em;
+    text-transform:uppercase; background:var(--green); color:#fff; padding:8px 12px; text-align:left; }
+  #report td { border:1px solid var(--green-line); padding:7px 12px; }
+  #report tr:nth-child(even) td { background:var(--green-tint); }
+  #report hr { border:0; border-top:1px solid var(--line); margin:28px 0; }
+  #report blockquote { border-left:3px solid var(--green-2); margin:0; padding:2px 16px; color:var(--muted); }
+  #report code { background:var(--green-tint); border-radius:4px; padding:1px 6px; font-size:.88em; }
+
   .hidden { display:none; }
-  footer { text-align:center; color:var(--muted); font-size:.78rem; margin-top:32px; font-family: system-ui, sans-serif; }
+  footer { text-align:center; color:var(--muted); font-size:.78rem; margin-top:30px; }
+  footer .tag { font-family:var(--head); letter-spacing:.1em; text-transform:uppercase; font-size:.68rem;
+                color:var(--green-2); display:block; margin-bottom:4px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Standard Management Company</h1>
-  <p>Monthly cash &amp; operations reports — internal</p>
+  <div class="brand">
+    <h1>Standard Management Company</h1>
+    <span>Monthly Reports &middot; Internal</span>
+  </div>
 </header>
 
 <div class="wrap">
   <div id="gate" class="card">
-    <h2 style="margin-top:0">Enter password</h2>
+    <div class="lockmark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h2>Team Access</h2>
+    <p>Enter the shared password to view the reports.</p>
     <input type="password" id="pw" placeholder="Password" autofocus>
     <div class="err" id="err"></div>
-    <button id="unlock">Unlock</button>
+    <button class="primary" id="unlock">Unlock</button>
   </div>
 
   <div id="app" class="hidden">
     <div class="toolbar">
-      <label for="picker" style="font-family:system-ui,sans-serif;font-size:.9rem;color:var(--muted)">Report:</label>
+      <label for="picker">Report</label>
       <select id="picker"></select>
       <div class="spacer"></div>
       <button class="lock" id="lock">Lock</button>
     </div>
-    <div class="card"><div id="report">Loading…</div></div>
-    <footer>Content is AES-256-GCM encrypted at rest. Decryption happens in your browser only.</footer>
+    <div class="card" id="reportcard"><div id="report">Loading&hellip;</div></div>
+    <footer>
+      <span class="tag">Standard Management Company &middot; Waterville, Maine</span>
+      Content is AES-256-GCM encrypted at rest. Decryption happens in your browser only.
+    </footer>
   </div>
 </div>
 
@@ -100,7 +162,7 @@ async function unlock() {
   if (!manifest.reports.length) { err.textContent = 'No reports published yet.'; return; }
   document.getElementById('unlock').textContent = 'Checking…';
   try {
-    await decryptReport(manifest.reports[0].file, pw);   // verify against newest report
+    await decryptReport(manifest.reports[0].file, pw);
   } catch (e) {
     err.textContent = 'Wrong password.';
     document.getElementById('unlock').textContent = 'Unlock';
@@ -120,7 +182,6 @@ document.getElementById('unlock').onclick = unlock;
 document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
 document.getElementById('lock').onclick = () => { sessionStorage.removeItem('smc_pw'); location.reload(); };
 
-// auto-unlock within the same browser session
 const saved = sessionStorage.getItem('smc_pw');
 if (saved) { document.getElementById('pw').value = saved; unlock(); }
 </script>
